@@ -1,0 +1,10 @@
+@use 'fonts';
+
+body {
+  background-color: #f3f3f3;
+  margin: 0;
+
+  font-family: fonts.$sans;
+  font-weight: 400;
+
+}
