@@ -3,11 +3,11 @@ import React, {
   useEffect,
   useRef
 } from 'react';
-import { TimelineLite } from 'gsap/all';
 import { times, shuffle } from 'lodash';
-import { random, maths } from 'varyd-utils';
+import useAnimationFrame from 'use-animation-frame';
 
 import config from 'data/config';
+import tickAudio from 'audio/tick.wav';
 
 import style from './index.module.scss';
 
@@ -17,38 +17,71 @@ export default function Wheel ({
   choices = []
 }) {
 
-  const wheelRef = useRef();
-
   const [ colors, setColors ] = useState([]);
+  const [ rotation, setRotation ] = useState(0);
+  const [ spinVel, setSpinVel ] = useState(0);
+  const [ spinAcc, setSpinAcc ] = useState(0);
 
-  const pegCount = Math.ceil(MIN_PEGS / choices.length) * choices.length;
+  const choiceCount = choices?.length || 0,
+        pegCount    = Math.ceil(MIN_PEGS / choiceCount) * choiceCount,
+        pegPerc     = 1 / pegCount;
 
   useEffect(() => {
     setColors(shuffle(config.colors));
   }, [ ]);
 
+  useAnimationFrame((e) => {
+    if (spinAcc !== 0) {
+      const trgtSpinVel = Math.min(1, spinVel + spinAcc);
+      setSpinVel(trgtSpinVel);
+      if (trgtSpinVel >= 1) {
+        holdSpin();
+      } else if (trgtSpinVel <= 0) {
+        endSpin();
+      }
+    } else if (spinVel > 0) {
+      if (Math.random() < 0.025) {
+        slowSpin();
+      }
+    }
+    if (spinVel > 0) {
+      const deltaR = Math.pow(spinVel / 4, 3);
+      const trgtRotation = rotation + deltaR;
+
+      if ((deltaR > pegPerc) || ((rotation % pegPerc) > (trgtRotation % pegPerc))) {
+        playTick();
+      }
+
+      setRotation(trgtRotation);
+    }
+  });
+
   function onSpinClick() {
+    startSpin();
+  }
 
-    const min      = 1,
-          max      = 11,
-          spin     = random.num(min, max),
-          duration = maths.map(spin, min, max, 3, 6);
+  function onSpinVelChange(e) {
+    setSpinVel(e.target.value / 100);
+  }
 
-    const tl = new TimelineLite();
+  function startSpin() {
+    setSpinAcc(0.01);
+  }
+  function holdSpin() {
+    setSpinVel(1)
+    setSpinAcc(0)
+  }
+  function slowSpin() {
+    setSpinAcc(-0.0015);
+  }
+  function endSpin() {
+    setSpinAcc(0);
+    setSpinVel(0);
+  }
 
-    tl
-      .to(wheelRef.current, duration, {
-        svgOrigin: '0 0',
-        rotation: `+=${360 * spin}`,
-        ease: 'expo.out',
-        force3D: true,
-      })
-      .to(wheelRef.current, 0.5, {
-        rotation: "+=2",
-        ease: 'power0.none',
-        force3D: true
-      },"-=0.5");
-
+  function playTick() {
+    const tick = new Audio(tickAudio);
+    tick.play();
   }
 
   function getCircleXY(perc) {
@@ -60,7 +93,7 @@ export default function Wheel ({
 
   function renderSlice(choice, index) {
 
-    const percPer   = 1 / choices.length,
+    const percPer   = 1 / choiceCount,
           percStart = percPer * index,
           percEnd   = percPer * (index + 1);
 
@@ -72,7 +105,7 @@ export default function Wheel ({
     return (
       <path
         key={index}
-        d={`M ${startX} ${startY} A 1 1 0 ${(choices.length > 1) ? 0 : 1} 1 ${endX} ${endY} L 0 0`}
+        d={`M ${startX} ${startY} A 1 1 0 ${(choiceCount > 1) ? 0 : 1} 1 ${endX} ${endY} L 0 0`}
         fill={color} />
     )
 
@@ -99,8 +132,10 @@ export default function Wheel ({
         <svg viewBox={`-1.1 -1.1 2.2 2.2`}>
 
           <g
-            ref={wheelRef}
-            className={style.wrapWheel}>
+            className={style.wrapWheel}
+            style={{
+              transform: `rotate(${rotation}turn)`
+            }}>
             <g className={style.slices}>
               {choices.map(renderSlice)}
             </g>
@@ -123,7 +158,10 @@ export default function Wheel ({
       </p>
 
       <p>
-        <button onClick={onSpinClick}>Spin</button>
+        <button
+          onClick={onSpinClick}>
+          Spin
+        </button>
       </p>
 
     </div>
