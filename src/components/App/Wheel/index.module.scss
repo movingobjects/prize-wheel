@@ -1,0 +1,46 @@
+@use 'styles/colors';
+
+.wrap {
+
+  @keyframes rotating {
+    from {
+      transform: rotate3d(0, 0, 1, 0turn);
+    }
+    to {
+      transform: rotate3d(0, 0, 1, 1turn);
+    }
+  }
+
+
+  svg {
+    filter: drop-shadow(1px 1px 3px rgba(0, 0, 0, .1));
+    width: 400px;
+    height: 400px;
+
+    circle.center {
+      fill: colors.$bg;
+      stroke: rgba(0, 0, 0, 0.15);
+      stroke-width: 0.005;
+    }
+
+    g.wrapWheel {
+      animation: rotating 5s linear infinite;
+
+      g.slices {
+        path {
+          stroke: rgba(0, 0, 0, 0.075);
+          stroke-width: 0.005;
+        }
+      }
+
+      g.pegs {
+        circle {
+          fill: black;
+        }
+      }
+
+    }
+
+  }
+
+}

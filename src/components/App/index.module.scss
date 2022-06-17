@@ -1,6 +1,24 @@
 
-@use 'styles/colors';
-
 .wrap {
-  background-color: colors.$primary;
+  width: 1000px;
+  margin: 50px auto;
+
+  main {
+    display: flex;
+    > section {
+      width: 50%;
+    }
+  }
+
+  .wrapInput {
+
+    textarea {
+      height: 150px;
+      width: 100%;
+    }
+
+  }
+
+  .wrapWheel { }
+
 }

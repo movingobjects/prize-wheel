@@ -1,7 +1,12 @@
+@use 'colors';
 @use 'fonts';
 
+* {
+  box-sizing: border-box;
+}
+
 body {
-  background-color: #f3f3f3;
+  background-color: colors.$bg;
   margin: 0;
 
   font-family: fonts.$sans;
