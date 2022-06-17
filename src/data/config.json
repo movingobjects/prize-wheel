@@ -1,5 +1,17 @@
 {
+  "defaultChoices": [
+    "Option 1",
+    "Option 2",
+    "Option 3",
+    "Option 4",
+    "Option 5"
+  ],
   "colors": [
+    "#e76", "#eb6", "#de6", "#9e6",
+    "#6e7", "#6eb", "#6de", "#69e",
+    "#76e", "#b6e", "#e6d", "#e69"
+  ],
+  "colors.backup": [
     "#e76", "#e86", "#e96", "#ea6", "#eb6", "#ec6", "#ed6", "#ee6",
     "#de6", "#ce6", "#be6", "#ae6", "#9e6", "#8e6", "#7e6", "#6e6",
     "#6e7", "#6e8", "#6e9", "#6ea", "#6eb", "#6ec", "#6ed", "#6ee",

@@ -2,16 +2,6 @@
 
 .wrap {
 
-  @keyframes rotating {
-    from {
-      transform: rotate3d(0, 0, 1, 0turn);
-    }
-    to {
-      transform: rotate3d(0, 0, 1, 1turn);
-    }
-  }
-
-
   svg {
     filter: drop-shadow(1px 1px 3px rgba(0, 0, 0, .1));
     width: 400px;
@@ -23,8 +13,13 @@
       stroke-width: 0.005;
     }
 
+    polygon.flapper {
+      fill: white;
+      stroke: black;
+      stroke-width: 0.005;
+    }
+
     g.wrapWheel {
-      animation: rotating 5s linear infinite;
 
       g.slices {
         path {

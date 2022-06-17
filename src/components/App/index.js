@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 
 import Wheel from './Wheel';
 
+import config from 'data/config';
+
 import style from './index.module.scss';
 
 export default function App() {
 
-  const [ inputText, setInputText ] = useState('');
+  const [ inputText, setInputText ] = useState(config.defaultChoices.join('\n'));
 
   const choices = inputText
     .split('\n')
@@ -18,13 +20,12 @@ export default function App() {
 
   return (
     <div className={style.wrap}>
-      <h1>App</h1>
 
       <main>
 
         <section className={style.wrapWheel}>
-          <Wheel
-            choices={choices} />
+          <Wheel choices={choices} />
+
         </section>
 
         <section className={style.wrapInput}>
