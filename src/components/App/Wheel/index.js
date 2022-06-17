@@ -5,13 +5,14 @@ import React, {
 } from 'react';
 import { times, shuffle } from 'lodash';
 import useAnimationFrame from 'use-animation-frame';
+import { random } from 'varyd-utils';
 
 import config from 'data/config';
 import tickAudio from 'audio/tick.wav';
 
 import style from './index.module.scss';
 
-const MIN_PEGS = 35;
+const MIN_PEGS = 25;
 
 export default function Wheel ({
   choices = []
@@ -21,6 +22,7 @@ export default function Wheel ({
   const [ rotation, setRotation ] = useState(0);
   const [ spinVel, setSpinVel ] = useState(0);
   const [ spinAcc, setSpinAcc ] = useState(0);
+  const [ selectedIndex, setSelectedIndex ] = useState(0);
 
   const choiceCount = choices?.length || 0,
         pegCount    = Math.ceil(MIN_PEGS / choiceCount) * choiceCount,
@@ -46,11 +48,13 @@ export default function Wheel ({
     }
     if (spinVel > 0) {
       const deltaR = Math.pow(spinVel / 4, 3);
-      const trgtRotation = rotation + deltaR;
+      const trgtRotation = (rotation + deltaR) % 1;
 
-      if ((deltaR > pegPerc) || ((rotation % pegPerc) > (trgtRotation % pegPerc))) {
+      if ((deltaR >= pegPerc) || ((rotation % pegPerc) > (trgtRotation % pegPerc))) {
         playTick();
       }
+
+      setSelectedIndex(Math.floor((1 - trgtRotation) * choiceCount))
 
       setRotation(trgtRotation);
     }
@@ -65,11 +69,12 @@ export default function Wheel ({
   }
 
   function startSpin() {
-    setSpinAcc(0.01);
+    const nextSpinAcc = random.num(0.005, 0.02);
+    setSpinAcc(nextSpinAcc);
   }
   function holdSpin() {
-    setSpinVel(1)
-    setSpinAcc(0)
+    setSpinVel(1);
+    setSpinAcc(0);
   }
   function slowSpin() {
     setSpinAcc(-0.0015);
@@ -100,7 +105,9 @@ export default function Wheel ({
     const [ startX, startY ] = getCircleXY(percStart);
     const [ endX, endY ]     = getCircleXY(percEnd);
 
-    const color = colors[index % colors.length];
+    const color = (index === selectedIndex)
+      ? 'white'
+      : colors[index % colors.length];
 
     return (
       <path
@@ -162,6 +169,13 @@ export default function Wheel ({
           onClick={onSpinClick}>
           Spin
         </button>
+        <input
+          type='range'
+          value={spinVel * 100}
+          onChange={onSpinVelChange} />
+      </p>
+      <p>
+        Selected: {selectedIndex}
       </p>
 
     </div>
