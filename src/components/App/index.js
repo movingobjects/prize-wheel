@@ -14,7 +14,7 @@ export default function App() {
     .split('\n')
     .filter((c) => !!c.length);
 
-  function onInputChange(e) {
+  const handleInputChange = (e) => {
     setInputText(e.target.value || '')
   }
 
@@ -25,13 +25,12 @@ export default function App() {
 
         <section className={style.wrapWheel}>
           <Wheel choices={choices} />
-
         </section>
 
         <section className={style.wrapInput}>
           <textarea
             value={inputText}
-            onChange={onInputChange} />
+            onChange={handleInputChange} />
         </section>
 
       </main>

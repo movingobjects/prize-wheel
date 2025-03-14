@@ -1,182 +1,196 @@
 import React, {
   useState,
-  useEffect,
-  useRef
+  useEffect
 } from 'react';
-import { times, shuffle } from 'lodash';
-import useAnimationFrame from 'use-animation-frame';
-import { random } from 'varyd-utils';
-
+import { motion } from 'motion/react';
+import { shuffle } from 'lodash';
 import config from 'data/config';
 import tickAudio from 'audio/tick.wav';
 
 import style from './index.module.scss';
-
-const MIN_PEGS = 25;
+import { random } from 'varyd-utils';
+import { useInterval } from 'react-use';
+import classNames from 'classnames';
 
 export default function Wheel ({
   choices = []
 }) {
 
-  const [ colors, setColors ] = useState([]);
-  const [ rotation, setRotation ] = useState(0);
-  const [ spinVel, setSpinVel ] = useState(0);
-  const [ spinAcc, setSpinAcc ] = useState(0);
-  const [ selectedIndex, setSelectedIndex ] = useState(0);
+  const [colors, setColors] = useState([]);
+  const [isDemoMode, setIsDemoMode] = useState(true);
+  const [rotation, setRotation] = useState(0);
+  const [prevIndex, setPrevIndex] = useState(0);
 
-  const choiceCount = choices?.length || 0,
-        pegCount    = Math.ceil(MIN_PEGS / choiceCount) * choiceCount,
-        pegPerc     = 1 / pegCount;
+  const choiceCount = choices?.length || 0;
+
+  useInterval(
+    () => {
+      shuffleColors();
+    },
+    isDemoMode ? 250 : null
+  );
 
   useEffect(() => {
-    setColors(shuffle(config.colors));
-  }, [ ]);
+    shuffleColors();
+  }, []);
 
-  useAnimationFrame((e) => {
-    if (spinAcc !== 0) {
-      const trgtSpinVel = Math.min(1, spinVel + spinAcc);
-      setSpinVel(trgtSpinVel);
-      if (trgtSpinVel >= 1) {
-        holdSpin();
-      } else if (trgtSpinVel <= 0) {
-        endSpin();
-      }
-    } else if (spinVel > 0) {
-      if (Math.random() < 0.025) {
-        slowSpin();
-      }
+  const shuffleColors = () => {
+    setColors(
+      shuffle(config.colors)
+    );
+  }
+
+  const resetDemoMode = () => {
+    setIsDemoMode(false);
+    setTimeout(() => {
+      setIsDemoMode(true);
+    }, 30000);
+  }
+
+  const handleSpinClick = () => {
+    const index = random.index(choices);
+    const angle = index * (360 / choiceCount);
+    const spins = random.int(10, 15);
+    const normRotation = rotation - (rotation % 360);
+    const targetRotation = normRotation + angle + (spins * 360);
+
+    setRotation(targetRotation);
+    resetDemoMode();
+  }
+
+  const handleRotationUpdate = ({ rotate }) => {
+    const index = getChoiceIndexFromAngle(rotate);
+
+    if (index !== prevIndex) {
+      playTick();
     }
-    if (spinVel > 0) {
-      const deltaR = Math.pow(spinVel / 4, 3);
-      const trgtRotation = (rotation + deltaR) % 1;
 
-      if ((deltaR >= pegPerc) || ((rotation % pegPerc) > (trgtRotation % pegPerc))) {
-        playTick();
-      }
+    setPrevIndex(index);
+  };
 
-      setSelectedIndex(Math.floor((1 - trgtRotation) * choiceCount))
-
-      setRotation(trgtRotation);
-    }
-  });
-
-  function onSpinClick() {
-    startSpin();
-  }
-
-  function onSpinVelChange(e) {
-    setSpinVel(e.target.value / 100);
-  }
-
-  function startSpin() {
-    const nextSpinAcc = random.num(0.005, 0.02);
-    setSpinAcc(nextSpinAcc);
-  }
-  function holdSpin() {
-    setSpinVel(1);
-    setSpinAcc(0);
-  }
-  function slowSpin() {
-    setSpinAcc(-0.0015);
-  }
-  function endSpin() {
-    setSpinAcc(0);
-    setSpinVel(0);
-  }
-
-  function playTick() {
+  const playTick = () => {
     const tick = new Audio(tickAudio);
+    tick.volume = config.tickVolume;
     tick.play();
   }
 
-  function getCircleXY(perc) {
+  const getCircleXY = (perc) => {
     return [
       Math.cos(2 * Math.PI * perc),
       Math.sin(2 * Math.PI * perc)
     ];
   }
 
-  function renderSlice(choice, index) {
+  const getChoiceIndexFromAngle = (angle) => {
+    const perc = ((angle / 360) + (1 / (2 * choiceCount))) % 1;
+    const index = Math.floor(perc * choiceCount);
+    return index;
+  }
 
-    const percPer   = 1 / choiceCount,
-          percStart = percPer * index,
-          percEnd   = percPer * (index + 1);
+  const getSlicePathDef = (index) => {
+    const isOdd = (choiceCount % 2 === 1);
+    const percOffset = isOdd ? 0 : 0.5 / choiceCount;
+
+    const percPer = 1 / choiceCount;
+    const percStart = percOffset + (percPer * index);
+    const percEnd = percOffset + (percPer * (index + 1));
 
     const [ startX, startY ] = getCircleXY(percStart);
-    const [ endX, endY ]     = getCircleXY(percEnd);
+    const [ endX, endY ] = getCircleXY(percEnd);
 
-    const color = (index === selectedIndex)
-      ? 'white'
-      : colors[index % colors.length];
+    return `M ${startX} ${startY} A 1 1 0 ${(choiceCount > 1) ? 0 : 1} 1 ${endX} ${endY} L 0 0`;
+  }
+
+  const renderSlice = (choice, index) => {
+    const color = colors[index % colors.length];
+    const pathDef = getSlicePathDef(index);
 
     return (
       <path
         key={index}
-        d={`M ${startX} ${startY} A 1 1 0 ${(choiceCount > 1) ? 0 : 1} 1 ${endX} ${endY} L 0 0`}
+        d={pathDef}
         fill={color} />
-    )
-
+    );
   }
-
-  function renderPeg(index) {
-
-    const [ x, y ] = getCircleXY(index / pegCount);
+  const renderSliceLabel = (choice, index) => {
+    const labelTurn = 0.5 + ((choiceCount - index) / choiceCount);
 
     return (
-      <circle
-        key={`peg-${index}`}
-        cx={x}
-        cy={y}
-        r='0.015' />
+      <text
+        key={index}
+        x="0"
+        y="0"
+        style={{
+          transform: `rotate(${labelTurn}turn) translate(-0.905px, 0.025px)`
+        }}>
+        {choice}
+      </text>
     );
+  }
 
+  const renderSliceOutline = (choice, index) => {
+    const pathDef = getSlicePathDef(index);
+
+    return (
+      <path
+        key={index}
+        d={pathDef} />
+    );
   }
 
   return (
-    <div className={style.wrap}>
+    <div className={classNames({
+      [style.wrap]: true,
+      [style.isDemoMode]: isDemoMode
+    })}>
 
-      <p>
-        <svg viewBox={`-1.1 -1.1 2.2 2.2`}>
+      <svg viewBox={`-1.1 -1.1 2.2 2.2`}>
 
-          <g
-            className={style.wrapWheel}
-            style={{
-              transform: `rotate(${rotation}turn)`
-            }}>
-            <g className={style.slices}>
-              {choices.map(renderSlice)}
-            </g>
-            <g className={style.pegs}>
-              {times(pegCount, renderPeg)}
-            </g>
+        <defs>
+          <mask id="center-hole">
+            <circle cx="0" cy="0" r={2} fill="white" />
+            <circle cx="0" cy="0" r={config.centerRadius} fill="black" />
+          </mask>
+        </defs>
+
+        <motion.g
+          mask="url(#center-hole)"
+          className={style.wrapWheel}
+          animate={{
+            rotate: rotation
+          }}
+          transition={{
+            type: 'inertia',
+            timeConstant: 1000,
+            modifyTarget: () => rotation
+          }}
+          onUpdate={handleRotationUpdate}>
+          <g className={style.slices}>
+            {choices.map(renderSlice)}
           </g>
-
+          <g className={style.labels}>
+            {choices.map(renderSliceLabel)}
+          </g>
+          <g className={style.outlines}>
+            {choices.map(renderSliceOutline)}
+          </g>
           <circle
-            className={style.center}
-            cx='0'
-            cy='0'
-            r='0.25' />
+            className={style.centerOutline}
+            cx="0"
+            cy="0"
+            r={config.centerRadius} />
+        </motion.g>
 
-          <polygon
-            className={style.flapper}
-            points='1.075,-0.05 1.075,0.05 0.95,0' />
+        <polygon
+          className={style.flapper}
+          points="-1.1,-0.05 -1.1,0.05 -0.95,0" />
 
-        </svg>
-      </p>
+      </svg>
 
-      <p>
-        <button
-          onClick={onSpinClick}>
-          Spin
-        </button>
-        <input
-          type='range'
-          value={spinVel * 100}
-          onChange={onSpinVelChange} />
-      </p>
-      <p>
-        Selected: {selectedIndex}
-      </p>
+      <button
+        onClick={handleSpinClick}>
+        Spin the wheel
+      </button>
 
     </div>
   )

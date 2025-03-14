@@ -1,16 +1,37 @@
 @use 'styles/colors';
+@use 'styles/fonts';
 
 .wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 50px;
+  padding-bottom: 25px;
+
+  @keyframes rotation {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(359deg);
+    }
+  }
+
+  &.isDemoMode {
+    svg g.wrapWheel {
+      animation: rotation 10s infinite linear;
+    }
+  }
 
   svg {
-    filter: drop-shadow(1px 1px 3px rgba(0, 0, 0, .1));
-    width: 400px;
-    height: 400px;
+    width: 75vw;
+    height: 75vh;
+    filter: drop-shadow(5px 5px 10px rgba(0, 100, 100, .2));
 
-    circle.center {
-      fill: colors.$bg;
-      stroke: rgba(0, 0, 0, 0.15);
-      stroke-width: 0.005;
+    circle.centerOutline {
+      stroke: white;
+      stroke-width: 0.05;
+      fill: none;
     }
 
     polygon.flapper {
@@ -19,19 +40,54 @@
 
     g.wrapWheel {
 
-      g.slices {
-        path {
-          stroke: rgba(0, 0, 0, 0.075);
-          stroke-width: 0.005;
-        }
-      }
-
-      g.pegs {
-        circle {
+      g.labels {
+        transform: rotate(180deg);
+        text {
           fill: black;
+          font-size: 0.1px;
         }
       }
 
+      g.outlines {
+        path {
+          fill: none;
+          stroke: white;
+          stroke-width: 0.025;
+        }
+      }
+
+    }
+
+  }
+
+  button {
+    cursor: pointer;
+    appearance: none;
+
+    padding: 15px 30px;
+    border: 5px solid #96e;
+    border-radius: 100px;
+
+    font-size: 30px;
+    font-family: fonts.$sans;
+    font-weight: 700;
+
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+
+    color: #96e;
+    background-color: white;
+
+    &:hover {
+      color: white;
+      background-color: #96e;
+      filter: drop-shadow(5px 5px 10px rgba(0, 100, 100, .2));
+    }
+
+    &:active {
+      transform:
+        scale(0.97);
+      filter: drop-shadow(0 0 2px rgba(0, 100, 100, .5));
     }
 
   }
