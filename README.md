@@ -16,6 +16,7 @@
 ### Spin end
 - [ ] Display chosen option prominently
 - [ ] Add button to remove selected name and respin
+- [ ] Add [confetti](https://www.kirilv.com/canvas-confetti/)
 
 ### Demo mode
 - [ ] Use `motion` for automatic rotation to make seamless with spin rotation
