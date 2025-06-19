@@ -1,5 +1,6 @@
 import React, {
   useState,
+  useRef,
   useEffect
 } from 'react';
 import { motion } from 'motion/react';
@@ -20,6 +21,8 @@ export default function Wheel ({
   const [isDemoMode, setIsDemoMode] = useState(true);
   const [rotation, setRotation] = useState(0);
   const [prevIndex, setPrevIndex] = useState(0);
+
+  const demoModeTimeout = useRef(null);
 
   const choiceCount = choices?.length || 0;
 
@@ -42,7 +45,8 @@ export default function Wheel ({
 
   const resetDemoMode = () => {
     setIsDemoMode(false);
-    setTimeout(() => {
+    clearTimeout(demoModeTimeout.current);
+    demoModeTimeout.current = setTimeout(() => {
       setIsDemoMode(true);
     }, 30000);
   }
